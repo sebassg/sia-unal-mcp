@@ -41,6 +41,9 @@ export const ADF_SELECTORS = {
     program: '#pt1\\:r1\\:0\\:soc3\\:\\:content',
     typology: '#pt1\\:r1\\:0\\:soc4\\:\\:content',
     nameInput: '#pt1\\:r1\\:0\\:it1\\:\\:content',
+    creditsInput: '#pt1\\:r1\\:0\\:it2\\:\\:content',
+    // TODO: ADF selectors for day-of-week checkboxes are unknown; needs manual inspection with PLAYWRIGHT_HEADLESS=false
+    daysSelectors: {} as Record<string, string>,
     searchButton: '#pt1\\:r1\\:0\\:cb1',
     resultsTable: '#pt1\\:r1\\:0\\:t1',
     resultsTableBody: '#pt1\\:r1\\:0\\:t1\\:\\:db',
@@ -83,12 +86,18 @@ export const TYPOLOGIES: Record<string, string> = {
   all: "",
 };
 
-// Sede codes for catalog dropdowns
+// Sede label fragments for fuzzy matching against the ADF dropdown text (uses NFD normalization)
+// Actual dropdown labels are like "1102 SEDE MEDELLÍN" — these substrings match after normalization
 export const SEDE_CODES: Record<string, string> = {
-  medellin: "2",
-  bogota: "1",
-  manizales: "3",
-  palmira: "4",
+  medellin: "MEDELLIN",
+  bogota: "BOGOTA",
+  manizales: "MANIZALES",
+  palmira: "PALMIRA",
+  amazonia: "AMAZONIA",
+  caribe: "CARIBE",
+  "de la paz": "DE LA PAZ",
+  orinoquia: "ORINOQUIA",
+  tumaco: "TUMACO",
 };
 
 // Rate limiting defaults

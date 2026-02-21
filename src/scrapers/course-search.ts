@@ -1,35 +1,25 @@
-import { searchByName } from "../clients/catalog-browser.js";
+import { searchCatalog } from "../clients/catalog-browser.js";
 import { globalCache } from "../cache/cache-manager.js";
 import type { SearchResult, Course } from "../types/sia.js";
 import type { TableRow } from "../parsers/adf-table-parser.js";
 
-// Maps typology enum keys to the human-readable labels used in the ADF dropdown
-const TYPOLOGY_LABELS: Record<string, string> = {
-  disciplinar_optativa: "Disciplinar Optativa",
-  fundamentacion_obligatoria: "Fundamentación Obligatoria",
-  disciplinar_obligatoria: "Disciplinar Obligatoria",
-  libre_eleccion: "Libre Elección",
-  nivelacion: "Nivelación",
-  trabajo_de_grado: "Trabajo de Grado",
-  fundamentacion_optativa: "Fundamentación Optativa",
-};
+export interface SearchCoursesParams {
+  level: string;
+  faculty: string;
+  program: string;
+  typology?: string;
+  name?: string;
+  credits?: number;
+  days?: string[];
+  sede?: string;
+}
 
-export async function searchCourses(
-  query: string,
-  sede: string = "1102 SEDE MEDELLÍN",
-  level: string = "Pregrado",
-  typology: string = "all",
-  page: number = 1,
-  pageSize: number = 15
-): Promise<SearchResult> {
-  const cacheKey = `search:${query}:${level}:${typology}`;
+export async function searchCourses(params: SearchCoursesParams): Promise<SearchResult> {
+  const cacheKey = `search:${params.level}:${params.faculty}:${params.program}:${params.typology ?? ""}:${params.name ?? ""}:${params.credits ?? ""}:${(params.days ?? []).join(",")}:${params.sede ?? ""}`;
   const cached = globalCache.get<SearchResult>(cacheKey);
   if (cached) return cached;
 
-  // Map typology enum to human label for ADF dropdown (or empty for "all")
-  const typologyLabel = typology !== "all" ? (TYPOLOGY_LABELS[typology] ?? "") : "";
-
-  const rows = await searchByName(query, level, typologyLabel);
+  const rows = await searchCatalog(params);
   const courses: Course[] = rows.map(rowToCourse);
 
   const result: SearchResult = {

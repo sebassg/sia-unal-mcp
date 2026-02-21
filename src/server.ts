@@ -1,8 +1,9 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import {
   searchCoursesSchema,
+  listFacultiesSchema,
+  listProgramsSchema,
   courseGroupsSchema,
-  browseCatalogSchema,
   courseDetailsSchema,
   seatAvailabilitySchema,
   authenticateSchema,
@@ -10,7 +11,7 @@ import {
 } from "./config/schemas.js";
 import { searchCourses } from "./scrapers/course-search.js";
 import { getCourseGroups, checkSeatAvailability } from "./scrapers/course-groups.js";
-import { browseCatalogByFaculty, getFullCourseDetails } from "./scrapers/catalog-browse.js";
+import { getFullCourseDetails, listFaculties, listPrograms } from "./scrapers/catalog-browse.js";
 import { authenticate, getSessionState } from "./auth/session-manager.js";
 import { getGrades } from "./scrapers/grades.js";
 import { getCurrentSchedule } from "./scrapers/schedule.js";
@@ -26,18 +27,79 @@ export function createServer(): McpServer {
   // === PUBLIC TOOLS ===
 
   server.tool(
+    "list-faculties",
+    "Listar las facultades disponibles en el catálogo del SIA UNAL para un nivel académico. Usar antes de search-courses para obtener el valor exacto del parámetro 'faculty'.",
+    listFacultiesSchema.shape,
+    async (params) => {
+      try {
+        const options = await listFaculties(params.level, params.sede);
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify(options, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: `Error listando facultades: ${error instanceof Error ? error.message : String(error)}`,
+            },
+          ],
+          isError: true,
+        };
+      }
+    }
+  );
+
+  server.tool(
+    "list-programs",
+    "Listar los planes de estudio disponibles para una facultad específica. Usar antes de search-courses para obtener el valor exacto del parámetro 'program'.",
+    listProgramsSchema.shape,
+    async (params) => {
+      try {
+        const options = await listPrograms(params.level, params.faculty, params.sede);
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify(options, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: `Error listando programas: ${error instanceof Error ? error.message : String(error)}`,
+            },
+          ],
+          isError: true,
+        };
+      }
+    }
+  );
+
+  server.tool(
     "search-courses",
-    "Buscar asignaturas por palabra clave en el SIA UNAL. Retorna nombre, código, créditos y tipología.",
+    "Buscar asignaturas en el catálogo público del SIA UNAL. Requiere faculty y program exactos (obtenerlos con list-faculties y list-programs). Retorna nombre, código, créditos y tipología.",
     searchCoursesSchema.shape,
     async (params) => {
       try {
-        const result = await searchCourses(
-          params.query,
-          params.level,
-          params.typology,
-          params.page,
-          params.pageSize
-        );
+        const result = await searchCourses({
+          level: params.level,
+          faculty: params.faculty,
+          program: params.program,
+          typology: params.typology,
+          name: params.name,
+          credits: params.credits,
+          days: params.days,
+          sede: params.sede,
+        });
         return {
           content: [
             {
@@ -119,45 +181,18 @@ export function createServer(): McpServer {
   );
 
   server.tool(
-    "browse-catalog",
-    "Navegar el catálogo de asignaturas por nivel, facultad y programa. Usa Playwright para interactuar con la UI del SIA.",
-    browseCatalogSchema.shape,
-    async (params) => {
-      try {
-        const catalog = await browseCatalogByFaculty(
-          params.level,
-          params.faculty,
-          params.program
-        );
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: JSON.stringify(catalog, null, 2),
-            },
-          ],
-        };
-      } catch (error) {
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: `Error navegando catálogo: ${error instanceof Error ? error.message : String(error)}`,
-            },
-          ],
-          isError: true,
-        };
-      }
-    }
-  );
-
-  server.tool(
     "get-course-details",
-    "Obtener detalles completos de una asignatura: descripción, prerrequisitos, facultad, departamento.",
+    "Obtener detalles completos de una asignatura: descripción, prerrequisitos, facultad, departamento. Requiere faculty y program exactos (obtenerlos con list-faculties y list-programs).",
     courseDetailsSchema.shape,
     async (params) => {
       try {
-        const details = await getFullCourseDetails(params.courseCode);
+        const details = await getFullCourseDetails({
+          courseCode: params.courseCode,
+          level: params.level,
+          faculty: params.faculty,
+          program: params.program,
+          sede: params.sede,
+        });
         return {
           content: [
             {

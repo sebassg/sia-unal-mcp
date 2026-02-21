@@ -1,11 +1,9 @@
 import { z } from "zod";
 
 export const searchCoursesSchema = z.object({
-  query: z.string().min(1).describe("Palabra clave para buscar asignaturas"),
-  level: z
-    .enum(["pregrado", "posgrado", "all"])
-    .default("pregrado")
-    .describe("Nivel académico"),
+  level: z.enum(["Pregrado", "Posgrado"]).default("Pregrado").describe("Nivel académico"),
+  faculty: z.string().min(1).describe("Facultad exacta (obtener con list-faculties)"),
+  program: z.string().min(1).describe("Plan de estudios exacto (obtener con list-programs)"),
   typology: z
     .enum([
       "disciplinar_optativa",
@@ -15,18 +13,27 @@ export const searchCoursesSchema = z.object({
       "nivelacion",
       "trabajo_de_grado",
       "fundamentacion_optativa",
-      "all",
     ])
-    .default("all")
-    .describe("Tipología de la asignatura"),
-  page: z.number().int().min(1).default(1).describe("Número de página"),
-  pageSize: z
-    .number()
-    .int()
-    .min(1)
-    .max(50)
-    .default(15)
-    .describe("Resultados por página"),
+    .optional()
+    .describe("Tipología de la asignatura (opcional)"),
+  name: z.string().optional().describe("Nombre o fragmento del nombre de la asignatura"),
+  credits: z.number().int().optional().describe("Número de créditos"),
+  days: z
+    .array(z.enum(["Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado", "Domingo"]))
+    .optional()
+    .describe("Días de la semana"),
+  sede: z.string().optional().describe("Sede (usar label exacto de list-faculties)"),
+});
+
+export const listFacultiesSchema = z.object({
+  level: z.enum(["Pregrado", "Posgrado"]).default("Pregrado").describe("Nivel académico"),
+  sede: z.string().optional().describe("Sede (ej: 'Medellín'). Si no se especifica, usa la sede configurada en el servidor."),
+});
+
+export const listProgramsSchema = z.object({
+  level: z.enum(["Pregrado", "Posgrado"]).default("Pregrado").describe("Nivel académico"),
+  faculty: z.string().min(1).describe("Facultad exacta obtenida con list-faculties"),
+  sede: z.string().optional().describe("Sede (ej: 'Medellín'). Si no se especifica, usa la sede configurada en el servidor."),
 });
 
 export const courseGroupsSchema = z.object({
@@ -36,20 +43,12 @@ export const courseGroupsSchema = z.object({
     .describe("Código numérico de la asignatura (ej: 3007747)"),
 });
 
-export const browseCatalogSchema = z.object({
-  level: z
-    .enum(["pregrado", "posgrado"])
-    .default("pregrado")
-    .describe("Nivel académico"),
-  faculty: z.string().optional().describe("Nombre de la facultad"),
-  program: z.string().optional().describe("Nombre del plan de estudios"),
-});
-
 export const courseDetailsSchema = z.object({
-  courseCode: z
-    .string()
-    .min(1)
-    .describe("Código de la asignatura"),
+  courseCode: z.string().min(1).describe("Código de la asignatura"),
+  level: z.enum(["Pregrado", "Posgrado"]).default("Pregrado").describe("Nivel académico"),
+  faculty: z.string().min(1).describe("Facultad exacta (obtener con list-faculties)"),
+  program: z.string().min(1).describe("Plan de estudios exacto (obtener con list-programs)"),
+  sede: z.string().optional().describe("Sede (ej: 'Medellín'). Si no se especifica, usa la sede configurada en el servidor."),
 });
 
 export const seatAvailabilitySchema = z.object({

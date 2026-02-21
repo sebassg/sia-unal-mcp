@@ -1,60 +1,73 @@
-import { browseCatalog, getCourseDetails } from "../clients/catalog-browser.js";
+import { getCourseDetailHtml, getFacultyOptions, getProgramOptions } from "../clients/catalog-browser.js";
+import { parseCourseDetailPage } from "../parsers/course-detail-parser.js";
 import { globalCache } from "../cache/cache-manager.js";
-import type { CatalogEntry, CourseDetails } from "../types/sia.js";
-import type { TableRow } from "../parsers/adf-table-parser.js";
+import type { CourseDetails, DropdownOption } from "../types/sia.js";
 
-export async function browseCatalogByFaculty(
-  level: string,
-  faculty?: string,
-  program?: string
-): Promise<CatalogEntry> {
-  const cacheKey = `catalog:${level}:${faculty ?? ""}:${program ?? ""}`;
-  const cached = globalCache.get<CatalogEntry>(cacheKey);
-  if (cached) return cached;
-
-  const rows = await browseCatalog(level, faculty, program);
-
-  const entry: CatalogEntry = {
-    level,
-    faculty: faculty ?? "Todas",
-    program: program ?? "Todos",
-    courses: rows.map(rowToCatalogCourse),
-  };
-
-  globalCache.set(cacheKey, entry);
-  return entry;
+export interface GetCourseDetailsParams {
+  courseCode: string;
+  level: string;
+  faculty: string;
+  program: string;
+  sede?: string;
 }
 
 export async function getFullCourseDetails(
-  courseCode: string
+  params: GetCourseDetailsParams
 ): Promise<CourseDetails> {
-  const cacheKey = `details:${courseCode}`;
+  const { courseCode, level, faculty, program, sede } = params;
+  const cacheKey = `details:${courseCode}:${level}:${faculty}:${program}:${sede ?? ""}`;
   const cached = globalCache.get<CourseDetails>(cacheKey);
   if (cached) return cached;
 
-  const rows = await getCourseDetails(courseCode);
+  const html = await getCourseDetailHtml({ courseCode, level, faculty, program, sede });
+
+  const partial = html
+    ? parseCourseDetailPage(html, courseCode)
+    : {};
 
   const details: CourseDetails = {
     code: courseCode,
-    name: rows[0]?.["Asignatura"] || rows[0]?.["col_1"] || "",
-    credits: parseInt(rows[0]?.["Créditos"] || rows[0]?.["col_2"] || "0"),
-    typology: rows[0]?.["Tipología"] || rows[0]?.["col_3"] || "",
-    faculty: rows[0]?.["Facultad"] || rows[0]?.["col_4"] || "",
-    department: rows[0]?.["Departamento"] || rows[0]?.["col_5"] || "",
-    prerequisites: [],
-    description: "",
-    groups: [],
+    name: partial.name || "",
+    credits: partial.credits ?? 0,
+    typology: partial.typology || "",
+    faculty: partial.faculty || faculty,
+    department: partial.department || "",
+    program: partial.program || program,
+    classCode: partial.classCode || "",
+    prerequisites: partial.prerequisites || [],
+    description: partial.description || "",
+    groups: partial.groups || [],
   };
 
   globalCache.set(cacheKey, details);
   return details;
 }
 
-function rowToCatalogCourse(row: TableRow) {
-  return {
-    code: row["Código"] || row["codigo"] || row["col_0"] || "",
-    name: row["Asignatura"] || row["asignatura"] || row["col_1"] || "",
-    credits: parseInt(row["Créditos"] || row["creditos"] || row["col_2"] || "0"),
-    typology: row["Tipología"] || row["tipologia"] || row["col_3"] || "",
-  };
+export async function listFaculties(
+  level: string,
+  sede?: string
+): Promise<DropdownOption[]> {
+  const cacheKey = `options:faculties:${level}:${sede ?? ""}`;
+  const cached = globalCache.get<DropdownOption[]>(cacheKey);
+  if (cached) return cached;
+
+  const options = await getFacultyOptions(level, sede);
+
+  globalCache.set(cacheKey, options);
+  return options;
+}
+
+export async function listPrograms(
+  level: string,
+  faculty: string,
+  sede?: string
+): Promise<DropdownOption[]> {
+  const cacheKey = `options:programs:${level}:${faculty}:${sede ?? ""}`;
+  const cached = globalCache.get<DropdownOption[]>(cacheKey);
+  if (cached) return cached;
+
+  const options = await getProgramOptions(level, faculty, sede);
+
+  globalCache.set(cacheKey, options);
+  return options;
 }

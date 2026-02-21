@@ -1,5 +1,10 @@
 // Domain types for SIA UNAL
 
+export interface DropdownOption {
+  value: string;
+  label: string;
+}
+
 export interface Course {
   code: string;
   name: string;
@@ -64,6 +69,28 @@ export interface CatalogCourse {
   typology: string;
 }
 
+export interface CatalogSchedule {
+  day: string;
+  startTime: string;
+  endTime: string;
+  classroom: string;
+}
+
+export interface CatalogGroup {
+  groupNumber: string;
+  professor: string;
+  schedules: CatalogSchedule[];
+  availableSeats: number;
+  totalSeats: number;
+}
+
+export interface CatalogPrerequisite {
+  /** Prerequisite type: M (mandatory), O (obligatory), E (simultaneous), A (annulment) */
+  type: string;
+  courseCode: string;
+  courseName: string;
+}
+
 export interface CourseDetails {
   code: string;
   name: string;
@@ -71,9 +98,11 @@ export interface CourseDetails {
   typology: string;
   faculty: string;
   department: string;
-  prerequisites: string[];
+  program?: string;
+  classCode?: string;
+  prerequisites: CatalogPrerequisite[];
   description: string;
-  groups: CourseGroup[];
+  groups: CatalogGroup[];
 }
 
 export interface Grade {

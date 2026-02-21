@@ -45,7 +45,7 @@ Agrega al archivo de configuracion de Claude Desktop (`claude_desktop_config.jso
   "mcpServers": {
     "sia-unal": {
       "command": "node",
-      "args": ["/Users/sebastiansepulveda/Projects/mcps/sia-unal/dist/index.js"],
+      "args": ["/user/mcps/sia-unal/dist/index.js"],
       "env": {
         "SIA_SEDE": "medellin"
       }
