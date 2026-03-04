@@ -38,3 +38,6 @@ coverage/
 # Claude Code (local)
 .claude/
 CLAUDE.md
+
+# Local config
+.mcp.json
