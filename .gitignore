@@ -1,7 +1,40 @@
+# Dependencies
 node_modules/
+
+# Build output
 dist/
-.env
+*.tsbuildinfo
+
+# Source maps
 *.js.map
-.claude
-.mcp.json
+*.d.ts.map
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Playwright
+playwright-report/
+test-results/
+
+# Coverage
+coverage/
+
+# Claude Code (local)
+.claude/
 CLAUDE.md
