@@ -26,10 +26,12 @@ export function createServer(): McpServer {
 
   // === PUBLIC TOOLS ===
 
-  server.tool(
+  server.registerTool(
     "list-faculties",
-    "Listar las facultades disponibles en el catálogo del SIA UNAL para un nivel académico. Usar antes de search-courses para obtener el valor exacto del parámetro 'faculty'.",
-    listFacultiesSchema.shape,
+    {
+      description: "Listar las facultades disponibles en el catálogo del SIA UNAL para un nivel académico. Usar antes de search-courses para obtener el valor exacto del parámetro 'faculty'.",
+      inputSchema: listFacultiesSchema.shape,
+    },
     async (params) => {
       try {
         const options = await listFaculties(params.level, params.sede);
@@ -55,10 +57,12 @@ export function createServer(): McpServer {
     }
   );
 
-  server.tool(
+  server.registerTool(
     "list-programs",
-    "Listar los planes de estudio disponibles para una facultad específica. Usar antes de search-courses para obtener el valor exacto del parámetro 'program'.",
-    listProgramsSchema.shape,
+    {
+      description: "Listar los planes de estudio disponibles para una facultad específica. Usar antes de search-courses para obtener el valor exacto del parámetro 'program'.",
+      inputSchema: listProgramsSchema.shape,
+    },
     async (params) => {
       try {
         const options = await listPrograms(params.level, params.faculty, params.sede);
@@ -84,10 +88,12 @@ export function createServer(): McpServer {
     }
   );
 
-  server.tool(
+  server.registerTool(
     "search-courses",
-    "Buscar asignaturas en el catálogo público del SIA UNAL. Requiere faculty y program exactos (obtenerlos con list-faculties y list-programs). Retorna nombre, código, créditos y tipología.",
-    searchCoursesSchema.shape,
+    {
+      description: "Buscar asignaturas en el catálogo público del SIA UNAL. Requiere faculty y program exactos (obtenerlos con list-faculties y list-programs). Retorna nombre, código, créditos y tipología.",
+      inputSchema: searchCoursesSchema.shape,
+    },
     async (params) => {
       try {
         const result = await searchCourses({
@@ -122,10 +128,12 @@ export function createServer(): McpServer {
     }
   );
 
-  server.tool(
+  server.registerTool(
     "get-course-groups",
-    "Obtener los grupos, horarios, docentes y aulas de una asignatura específica por su código.",
-    courseGroupsSchema.shape,
+    {
+      description: "Obtener los grupos, horarios, docentes y aulas de una asignatura específica por su código.",
+      inputSchema: courseGroupsSchema.shape,
+    },
     async (params) => {
       try {
         const groups = await getCourseGroups(params.courseCode);
@@ -151,10 +159,12 @@ export function createServer(): McpServer {
     }
   );
 
-  server.tool(
+  server.registerTool(
     "check-seat-availability",
-    "Consultar cupos disponibles en tiempo real para una asignatura. Muestra cupos totales y disponibles por grupo.",
-    seatAvailabilitySchema.shape,
+    {
+      description: "Consultar cupos disponibles en tiempo real para una asignatura. Muestra cupos totales y disponibles por grupo.",
+      inputSchema: seatAvailabilitySchema.shape,
+    },
     async (params) => {
       try {
         const availability = await checkSeatAvailability(params.courseCode);
@@ -180,10 +190,12 @@ export function createServer(): McpServer {
     }
   );
 
-  server.tool(
+  server.registerTool(
     "get-course-details",
-    "Obtener detalles completos de una asignatura: descripción, prerrequisitos, facultad, departamento. Requiere faculty y program exactos (obtenerlos con list-faculties y list-programs).",
-    courseDetailsSchema.shape,
+    {
+      description: "Obtener detalles completos de una asignatura: descripción, prerrequisitos, facultad, departamento. Requiere faculty y program exactos (obtenerlos con list-faculties y list-programs).",
+      inputSchema: courseDetailsSchema.shape,
+    },
     async (params) => {
       try {
         const details = await getFullCourseDetails({
@@ -217,10 +229,12 @@ export function createServer(): McpServer {
 
   // === AUTHENTICATED TOOLS ===
 
-  server.tool(
+  server.registerTool(
     "authenticate",
-    "Iniciar sesión en el SIA con credenciales institucionales UN. Necesario antes de usar tools que requieren autenticación.",
-    authenticateSchema.shape,
+    {
+      description: "Iniciar sesión en el SIA con credenciales institucionales UN. Necesario antes de usar tools que requieren autenticación.",
+      inputSchema: authenticateSchema.shape,
+    },
     async (params) => {
       try {
         const session = await authenticate(params.username, params.password);
@@ -254,10 +268,12 @@ export function createServer(): McpServer {
     }
   );
 
-  server.tool(
+  server.registerTool(
     "get-grades",
-    "Obtener notas del estudiante. Requiere autenticación previa. Opcionalmente filtrar por período (ej: 2024-1S).",
-    gradesSchema.shape,
+    {
+      description: "Obtener notas del estudiante. Requiere autenticación previa. Opcionalmente filtrar por período (ej: 2024-1S).",
+      inputSchema: gradesSchema.shape,
+    },
     async (params) => {
       try {
         const state = getSessionState();
@@ -296,10 +312,11 @@ export function createServer(): McpServer {
     }
   );
 
-  server.tool(
+  server.registerTool(
     "get-current-schedule",
-    "Obtener el horario actual del estudiante. Requiere autenticación previa.",
-    {},
+    {
+      description: "Obtener el horario actual del estudiante. Requiere autenticación previa.",
+    },
     async () => {
       try {
         const state = getSessionState();
@@ -338,10 +355,11 @@ export function createServer(): McpServer {
     }
   );
 
-  server.tool(
+  server.registerTool(
     "get-academic-history",
-    "Obtener historial académico completo con PAPA, créditos y notas por período. Requiere autenticación previa.",
-    {},
+    {
+      description: "Obtener historial académico completo con PAPA, créditos y notas por período. Requiere autenticación previa.",
+    },
     async () => {
       try {
         const state = getSessionState();
@@ -380,10 +398,11 @@ export function createServer(): McpServer {
     }
   );
 
-  server.tool(
+  server.registerTool(
     "get-enrollment-status",
-    "Obtener estado de matrícula actual: asignaturas inscritas, créditos y estado. Requiere autenticación previa.",
-    {},
+    {
+      description: "Obtener estado de matrícula actual: asignaturas inscritas, créditos y estado. Requiere autenticación previa.",
+    },
     async () => {
       try {
         const state = getSessionState();
