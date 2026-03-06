@@ -8,7 +8,7 @@ let browser: Browser | null = null;
 
 async function getBrowser(): Promise<Browser> {
   if (!browser || !browser.isConnected()) {
-    browser = await chromium.launch({ headless: PLAYWRIGHT_HEADLESS });
+    browser = await chromium.launch({ headless: false /*PLAYWRIGHT_HEADLESS */});
   }
   return browser;
 }
@@ -147,6 +147,7 @@ async function selectAndWaitPpr(
 async function navigateToCatalog(page: Page): Promise<void> {
   // "load" waits for all scripts (ADF registers its cascade handlers on load, not DOMContentLoaded)
   await page.goto(URLS.catalogSearch(), { waitUntil: "load", timeout: 45000 });
+  console.log("Navigated to catalog page-------------------------------");
   await page.waitForSelector(ADF_SELECTORS.catalog.level, { timeout: 10000 });
 }
 
@@ -366,10 +367,7 @@ export async function searchCatalog(params: SearchCatalogParams): Promise<TableR
       }
     }
 
-    // 8. Days filter — TODO: ADF selectors unknown, skip silently
-
-    // 9. Execute search and wait for results
-    await page.click(sel.searchButton);
+    await page.click(`${sel.searchButton} a`);
     await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
 
     const tableHtml = await page.evaluate((tableSelector) => {

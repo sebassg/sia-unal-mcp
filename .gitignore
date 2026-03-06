@@ -41,3 +41,7 @@ CLAUDE.md
 
 # Local config
 .mcp.json
+
+
+# tests 
+test-screpers.ts

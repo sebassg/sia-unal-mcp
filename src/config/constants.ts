@@ -45,8 +45,8 @@ export const ADF_SELECTORS = {
     // TODO: ADF selectors for day-of-week checkboxes are unknown; needs manual inspection with PLAYWRIGHT_HEADLESS=false
     daysSelectors: {} as Record<string, string>,
     searchButton: '#pt1\\:r1\\:0\\:cb1',
-    resultsTable: '#pt1\\:r1\\:0\\:t1',
-    resultsTableBody: '#pt1\\:r1\\:0\\:t1\\:\\:db',
+    resultsTable: '#pt1\\:r1\\:0\\:t4',
+    resultsTableBody: '#pt1\\:r1\\:0\\:t4\\:\\:db',
   },
   login: {
     usernameInput: '#username',
