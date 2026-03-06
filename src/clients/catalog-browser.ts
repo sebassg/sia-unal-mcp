@@ -8,7 +8,7 @@ let browser: Browser | null = null;
 
 async function getBrowser(): Promise<Browser> {
   if (!browser || !browser.isConnected()) {
-    browser = await chromium.launch({ headless: false /*PLAYWRIGHT_HEADLESS */});
+    browser = await chromium.launch({ headless: PLAYWRIGHT_HEADLESS});
   }
   return browser;
 }
@@ -70,21 +70,7 @@ async function waitForSelectEnabled(
     .catch(() => {});
 }
 
-/**
- * Trigger Oracle ADF's cascade PPR for a select element after its value has been changed.
- *
- * page.selectOption() fires the DOM change event and ADF's onchange handler runs, but in
- * Playwright headless mode AdfPage._sendRichPayload is never reached (the internal ADF event
- * queue is not initialised without a real display). Calling _sendRichPayload directly bypasses
- * the broken event-queue path and fires the actual PPR POST to the server.
- *
- * The first POST is blocked by the SIA WAF (403) because ADF serialises internal JS objects
- * into the request body. When addPartialTargets() is called beforehand, ADF automatically
- * retries with a clean body that the WAF allows through (200), which updates the DOM.
- */
 async function adfTrigger(page: Page, selector: string): Promise<void> {
-  // All cascade-dependent dropdowns in the catalog form.
-  // Adding them as partial targets causes ADF to retry (clean body, no JS) after the WAF-403.
   const CATALOG_CASCADE_IDS = [
     "pt1:r1:0:soc9", // Sede
     "pt1:r1:0:soc2", // Facultad
@@ -111,19 +97,10 @@ async function adfTrigger(page: Page, selector: string): Promise<void> {
   );
 }
 
-/**
- * Wait for ADF cascade XHR to settle after a dropdown selection.
- * Uses networkidle with a short timeout; falls through silently if it takes too long.
- */
 async function waitForAdfCascade(page: Page, timeoutMs = 4000): Promise<void> {
   await page.waitForLoadState("networkidle", { timeout: timeoutMs }).catch(() => {});
 }
 
-/**
- * Fires an action (dropdown selection) and simultaneously waits for the ADF PPR response.
- * Using Promise.all avoids the race condition where the PPR fires before we start listening.
- * Silently continues if no PPR arrives (e.g. first selection without a cascade dependency).
- */
 async function selectAndWaitPpr(
   page: Page,
   action: () => Promise<void>,
@@ -147,7 +124,6 @@ async function selectAndWaitPpr(
 async function navigateToCatalog(page: Page): Promise<void> {
   // "load" waits for all scripts (ADF registers its cascade handlers on load, not DOMContentLoaded)
   await page.goto(URLS.catalogSearch(), { waitUntil: "load", timeout: 45000 });
-  console.log("Navigated to catalog page-------------------------------");
   await page.waitForSelector(ADF_SELECTORS.catalog.level, { timeout: 10000 });
 }
 
