@@ -1,6 +1,6 @@
 # SIA UNAL MCP Server
 
-MCP server para el Sistema de Informacion Academica (SIA) de la Universidad Nacional de Colombia, Sede Medellin.
+MCP server para el Sistema de Informacion Academica (SIA) de la Universidad Nacional de Colombia.
 
 Permite buscar asignaturas, consultar horarios, cupos, notas e historial academico a traves de Claude u otro cliente MCP.
 
@@ -19,10 +19,10 @@ npm run build
 
 ## Configuracion
 
-Copia `.env.example` a `.env` y configura las variables necesarias:
+Crea un archivo `.env` en la raiz del proyecto con las variables necesarias:
 
 ```bash
-cp .env.example .env
+touch .env
 ```
 
 ### Variables de entorno
@@ -60,11 +60,12 @@ Agrega al archivo de configuracion de Claude Desktop (`claude_desktop_config.jso
 
 | Tool | Descripcion |
 |------|-------------|
-| `search-courses` | Buscar asignaturas por palabra clave |
-| `get-course-groups` | Obtener grupos/horarios de una asignatura |
-| `check-seat-availability` | Cupos disponibles en tiempo real |
-| `browse-catalog` | Navegar catalogo por facultad/programa |
-| `get-course-details` | Detalles completos de una asignatura |
+| `list-faculties` | Listar facultades disponibles para un nivel academico |
+| `list-programs` | Listar programas de estudio de una facultad |
+| `search-courses` | Buscar asignaturas en el catalogo por facultad y programa |
+| `get-course-groups` | Obtener grupos, horarios, profesores y salones de una asignatura |
+| `check-seat-availability` | Consultar cupos disponibles en tiempo real por grupo |
+| `get-course-details` | Detalles completos de una asignatura (descripcion, prerrequisitos) |
 
 ### Autenticados (requieren credenciales UN)
 
@@ -78,16 +79,49 @@ Agrega al archivo de configuracion de Claude Desktop (`claude_desktop_config.jso
 
 ## Ejemplos de uso
 
-Preguntale a Claude cosas como:
-- "Que cursos de programacion hay disponibles?"
+### Sin autenticacion
+
+```
+# Listar facultades de pregrado en Medellin
+list-faculties(level="Pregrado", sede="MEDELLÍN")
+
+# Listar programas de una facultad
+list-programs(level="Pregrado", faculty="Facultad de Minas", sede="MEDELLÍN")
+
+# Buscar asignaturas de un programa
+search-courses(level="Pregrado", faculty="Facultad de Minas", program="Ingenieria de Sistemas e Informatica")
+
+# Consultar cupos de una asignatura
+check-seat-availability(courseCode="3007747")
+```
+
+Tambien puedes preguntarle a Claude directamente:
+- "Que asignaturas hay en Ingenieria de Sistemas en Medellin?"
 - "Cuantos cupos quedan en la asignatura 3007747?"
 - "Muestrame los horarios de algoritmos"
+
+### Con autenticacion
+
+```
+# Iniciar sesion
+authenticate(username="tuusuario", password="tucontrasena")
+
+# Ver notas del semestre actual
+get-grades()
+
+# Ver historial academico completo con PAPA
+get-academic-history()
+```
+
+Tambien puedes pedirle a Claude:
 - "Inicia sesion con mi usuario X y muestrame mis notas del semestre"
+- "Cual es mi PAPA acumulado?"
 
 ## Arquitectura
 
 - **JSON-RPC**: Endpoint no documentado del SIA para busquedas rapidas (sin autenticacion)
-- **Playwright**: Para interacciones con la UI dinamica de Oracle ADF y autenticacion via OAM
+- **Playwright + ADF**: Navegacion del catalogo publico mediante Playwright headless que maneja el cascading de dropdowns de Oracle ADF via Partial Page Rendering (PPR). Usado por `list-faculties`, `list-programs`, `search-courses` y `get-course-details`.
+- **Playwright + OAM**: Autenticacion institucional via Oracle Access Manager para los tools que requieren sesion.
 
 ## Seguridad
 
