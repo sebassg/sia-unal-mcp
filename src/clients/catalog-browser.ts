@@ -344,7 +344,17 @@ export async function searchCatalog(params: SearchCatalogParams): Promise<TableR
     }
 
     await page.click(`${sel.searchButton} a`);
-    await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
+    await page.waitForFunction(
+      (tableSelector) => {
+        const table = document.querySelector(tableSelector);
+        return (
+          table !== null &&
+          table.querySelector(".af_table_data-table tr[role='row']") !== null
+        );
+      },
+      sel.resultsTable,
+      { timeout: 5000 }
+    ).catch(() => {});
 
     const tableHtml = await page.evaluate((tableSelector) => {
       const table = document.querySelector(tableSelector);
