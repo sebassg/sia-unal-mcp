@@ -368,6 +368,75 @@ export async function searchCatalog(params: SearchCatalogParams): Promise<TableR
   }
 }
 
+/**
+ * Navigate to the catalog, search by courseCode alone (no cascade required),
+ * click the matching result row, and return the detail page HTML.
+ */
+export async function getCourseGroupsHtml(courseCode: string): Promise<string> {
+  await globalRateLimiter.wait();
+
+  const b = await getBrowser();
+  const page = await b.newPage();
+
+  try {
+    await navigateToCatalog(page);
+
+    const sel = ADF_SELECTORS.catalog;
+
+    // Fill the name/code input with the course code
+    const nameInput =
+      (await page.$(sel.nameInput)) ?? (await page.$('input[id*="it1"]'));
+    if (nameInput) {
+      await nameInput.fill(courseCode);
+    }
+
+    // Click search (try inner <a> first, fall back to the button container)
+    await page.click(`${sel.searchButton} a`).catch(() => page.click(sel.searchButton));
+
+    // Wait for at least one result row to appear
+    await page
+      .waitForFunction(
+        (tableSelector) => {
+          const table = document.querySelector(tableSelector);
+          return (
+            table !== null &&
+            table.querySelector(".af_table_data-table tr[role='row']") !== null
+          );
+        },
+        sel.resultsTable,
+        { timeout: 15000 }
+      )
+      .catch(() => {});
+
+    // Find the row whose first cell matches the exact code and click its link
+    const code = courseCode.trim();
+    const clicked = await page.evaluate((targetCode) => {
+      const cells = Array.from(document.querySelectorAll("td"));
+      for (const cell of cells) {
+        if (cell.textContent?.trim() === targetCode) {
+          const link = cell.querySelector("a");
+          if (link) {
+            (link as HTMLElement).click();
+          } else {
+            (cell as HTMLElement).click();
+          }
+          return true;
+        }
+      }
+      return false;
+    }, code);
+
+    if (!clicked) {
+      return "";
+    }
+
+    await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
+    return await page.content();
+  } finally {
+    await page.close();
+  }
+}
+
 export interface CourseBrowserParams {
   courseCode: string;
   level: string;
