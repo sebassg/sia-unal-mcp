@@ -1,4 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { z } from "zod";
 import {
   searchCoursesSchema,
   listFacultiesSchema,
@@ -30,9 +31,9 @@ export function createServer(): McpServer {
     "list-faculties",
     {
       description: "Listar las facultades disponibles en el catálogo del SIA UNAL para un nivel académico. Usar antes de search-courses para obtener el valor exacto del parámetro 'faculty'.",
-      inputSchema: listFacultiesSchema.shape,
+      inputSchema: listFacultiesSchema.shape as any,
     },
-    async (params) => {
+    async (params: z.infer<typeof listFacultiesSchema>) => {
       try {
         const options = await listFaculties(params.level, params.sede);
         return {
@@ -61,9 +62,9 @@ export function createServer(): McpServer {
     "list-programs",
     {
       description: "Listar los planes de estudio disponibles para una facultad específica. Usar antes de search-courses para obtener el valor exacto del parámetro 'program'.",
-      inputSchema: listProgramsSchema.shape,
+      inputSchema: listProgramsSchema.shape as any,
     },
-    async (params) => {
+    async (params: z.infer<typeof listProgramsSchema>) => {
       try {
         const options = await listPrograms(params.level, params.faculty, params.sede);
         return {
@@ -92,9 +93,9 @@ export function createServer(): McpServer {
     "search-courses",
     {
       description: "Buscar asignaturas en el catálogo público del SIA UNAL. Requiere faculty y program exactos (obtenerlos con list-faculties y list-programs). Retorna nombre, código, créditos y tipología.",
-      inputSchema: searchCoursesSchema.shape,
+      inputSchema: searchCoursesSchema.shape as any,
     },
-    async (params) => {
+    async (params: z.infer<typeof searchCoursesSchema>) => {
       try {
         const result = await searchCourses({
           level: params.level,
@@ -132,9 +133,9 @@ export function createServer(): McpServer {
     "get-course-groups",
     {
       description: "Obtener los grupos, horarios, docentes y aulas de una asignatura específica por su código.",
-      inputSchema: courseGroupsSchema.shape,
+      inputSchema: courseGroupsSchema.shape as any,
     },
-    async (params) => {
+    async (params: z.infer<typeof courseGroupsSchema>) => {
       try {
         const groups = await getCourseGroups(params.courseCode);
         return {
@@ -163,9 +164,9 @@ export function createServer(): McpServer {
     "check-seat-availability",
     {
       description: "Consultar cupos disponibles en tiempo real para una asignatura. Muestra cupos totales y disponibles por grupo.",
-      inputSchema: seatAvailabilitySchema.shape,
+      inputSchema: seatAvailabilitySchema.shape as any,
     },
-    async (params) => {
+    async (params: z.infer<typeof seatAvailabilitySchema>) => {
       try {
         const availability = await checkSeatAvailability(params.courseCode);
         return {
@@ -194,9 +195,9 @@ export function createServer(): McpServer {
     "get-course-details",
     {
       description: "Obtener detalles completos de una asignatura: descripción, prerrequisitos, facultad, departamento. Requiere faculty y program exactos (obtenerlos con list-faculties y list-programs).",
-      inputSchema: courseDetailsSchema.shape,
+      inputSchema: courseDetailsSchema.shape as any,
     },
-    async (params) => {
+    async (params: z.infer<typeof courseDetailsSchema>) => {
       try {
         const details = await getFullCourseDetails({
           courseCode: params.courseCode,
@@ -233,9 +234,9 @@ export function createServer(): McpServer {
     "authenticate",
     {
       description: "Iniciar sesión en el SIA con credenciales institucionales UN. Necesario antes de usar tools que requieren autenticación.",
-      inputSchema: authenticateSchema.shape,
+      inputSchema: authenticateSchema.shape as any,
     },
-    async (params) => {
+    async (params: z.infer<typeof authenticateSchema>) => {
       try {
         const session = await authenticate(params.username, params.password);
         return {
@@ -272,9 +273,9 @@ export function createServer(): McpServer {
     "get-grades",
     {
       description: "Obtener notas del estudiante. Requiere autenticación previa. Opcionalmente filtrar por período (ej: 2024-1S).",
-      inputSchema: gradesSchema.shape,
+      inputSchema: gradesSchema.shape as any,
     },
-    async (params) => {
+    async (params: z.infer<typeof gradesSchema>) => {
       try {
         const state = getSessionState();
         if (!state.isAuthenticated) {
