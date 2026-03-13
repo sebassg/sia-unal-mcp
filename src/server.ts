@@ -11,6 +11,7 @@ import {
   gradesSchema,
 } from "./config/schemas.js";
 import { searchCourses } from "./scrapers/course-search.js";
+import { searchCourseGroups } from "./scrapers/course-groups-search.js";
 import { getCourseGroups, checkSeatAvailability } from "./scrapers/course-groups.js";
 import { getFullCourseDetails, listFaculties, listPrograms } from "./scrapers/catalog-browse.js";
 import { authenticate, getSessionState } from "./auth/session-manager.js";
@@ -121,6 +122,46 @@ export function createServer(): McpServer {
             {
               type: "text" as const,
               text: `Error buscando asignaturas: ${error instanceof Error ? error.message : String(error)}`,
+            },
+          ],
+          isError: true,
+        };
+      }
+    }
+  );
+
+  server.registerTool(
+    "search-course-groups",
+    {
+      description: "Buscar asignaturas en el catálogo del SIA UNAL y obtener los grupos, horarios, docentes y aulas de cada resultado en una sola llamada. Combina search-courses + get-course-groups. Usar filtros (name, typology, credits) para acotar resultados y reducir tiempo de respuesta.",
+      inputSchema: searchCoursesSchema.shape as any,
+    },
+    async (params: z.infer<typeof searchCoursesSchema>) => {
+      try {
+        const result = await searchCourseGroups({
+          level: params.level,
+          faculty: params.faculty,
+          program: params.program,
+          typology: params.typology,
+          name: params.name,
+          credits: params.credits,
+          days: params.days,
+          sede: params.sede,
+        });
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify(result, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: `Error buscando grupos: ${error instanceof Error ? error.message : String(error)}`,
             },
           ],
           isError: true,

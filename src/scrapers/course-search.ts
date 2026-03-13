@@ -32,7 +32,7 @@ export async function searchCourses(params: SearchCoursesParams): Promise<Search
   return result;
 }
 
-function rowToCourse(row: TableRow): Course {
+export function rowToCourse(row: TableRow): Course {
   return {
     code: row["Código"] || row["col_0"] || "",
     name: row["Asignatura"] || row["col_1"] || "",
